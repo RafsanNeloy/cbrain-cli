@@ -242,6 +242,14 @@ def test_print_tag_operation_result_success(capsys):
     assert "created successfully" in capsys.readouterr().out
 
 
+def test_print_tag_operation_result_failure_json_includes_error(capsys):
+    tags_fmt.print_tag_operation_result(
+        "create", success=False, error_msg="name taken", args=make_args(json=True)
+    )
+    result = parse_json_output(capsys)
+    assert result["error"] == "name taken"
+
+
 def test_print_projects_list_with_data(capsys):
     projects_fmt.print_projects_list([{"id": 1, "type": "Group", "name": "A"}], make_args())
     assert "Group" in capsys.readouterr().out

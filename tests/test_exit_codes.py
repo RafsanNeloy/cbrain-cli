@@ -1,5 +1,6 @@
 import io
 import json
+import socket
 from unittest.mock import MagicMock
 from urllib.error import HTTPError, URLError
 
@@ -128,6 +129,17 @@ def test_handle_connection_error_html_body(capsys):
     out = capsys.readouterr().out
     assert "Not Found" in out
     assert "Record missing" in out
+
+
+def test_handle_connection_error_timeout(capsys):
+    handle_connection_error(URLError(socket.timeout("timed out")))
+    assert "timed out" in capsys.readouterr().out
+
+
+def test_handle_errors_bare_read_timeout(capsys):
+    result = handle_errors(MagicMock(side_effect=socket.timeout("timed out")))()
+    assert result == 1
+    assert "timed out" in capsys.readouterr().out
 
 
 def test_handle_connection_error_generic_url_error(capsys, monkeypatch):

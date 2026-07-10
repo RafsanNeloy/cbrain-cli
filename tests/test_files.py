@@ -43,7 +43,7 @@ def test_list_files_empty_list_is_not_error(mock_urlopen):
 def test_list_files_passes_filter_params(monkeypatch):
     captured = {}
 
-    def fake_urlopen(req):
+    def fake_urlopen(req, **kwargs):
         from unittest.mock import MagicMock
 
         captured["url"] = req.full_url
@@ -112,7 +112,7 @@ def test_upload_file_success(monkeypatch, tmp_path):
     upload_path.write_bytes(b"payload")
     captured = {}
 
-    def fake_urlopen(request):
+    def fake_urlopen(request, **kwargs):
         captured["content_type"] = request.headers.get("Content-type", "")
         from unittest.mock import MagicMock
 

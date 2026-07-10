@@ -58,7 +58,9 @@ def print_files_list(files_data, args):
     dynamic_table_print(files_data, ["id", "type", "name"], ["ID", "Type", "File Name"])
 
 
-def print_upload_result(response_data, response_status, file_name, file_size, data_provider_id):
+def print_upload_result(
+    response_data, response_status, file_name, file_size, data_provider_id, args=None
+):
     """
     Print the result of a file upload operation.
 
@@ -74,7 +76,12 @@ def print_upload_result(response_data, response_status, file_name, file_size, da
         Size of the uploaded file in bytes
     data_provider_id : int
         ID of the data provider
+    args : argparse.Namespace, optional
+        Command line arguments, including the --json flag
     """
+    if args is not None and output_json(args, response_data):
+        return
+
     print(f"Uploading {file_name} ({file_size} bytes) to data provider {data_provider_id}...")
 
     if response_status == 200 or response_status == 201:
@@ -83,7 +90,7 @@ def print_upload_result(response_data, response_status, file_name, file_size, da
             print(f"Server response: {response_data['notice']}")
 
 
-def print_move_copy_result(response_data, response_status, operation="move"):
+def print_move_copy_result(response_data, response_status, operation="move", args=None):
     """
     Print the result of a file move or copy operation.
 
@@ -95,7 +102,12 @@ def print_move_copy_result(response_data, response_status, operation="move"):
         HTTP status code
     operation : str
         Operation type ("move" or "copy")
+    args : argparse.Namespace, optional
+        Command line arguments, including the --json flag
     """
+    if args is not None and output_json(args, response_data):
+        return
+
     if response_status == 200 or response_status == 201:
         # Show the message from the API response
         message = response_data.get("message", "").strip()

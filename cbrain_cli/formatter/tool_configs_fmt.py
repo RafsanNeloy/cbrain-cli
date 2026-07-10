@@ -88,4 +88,6 @@ def print_boutiques_descriptor(boutiques_descriptor, args):
         print("No Boutiques descriptor found.")
         return
 
+    if output_json(args, boutiques_descriptor):
+        return
     json_printer(boutiques_descriptor)

@@ -54,5 +54,17 @@ def test_dynamic_table_print_header_mismatch_raises():
 
 
 def test_version_info(capsys):
-    version_info(MagicMock())
+    version_info(MagicMock(json=False, jsonl=False))
     assert "cbrain cli client version" in capsys.readouterr().out
+
+
+def test_version_info_json(capsys):
+    version_info(MagicMock(json=True, jsonl=False))
+    out = json.loads(capsys.readouterr().out)
+    assert "version" in out
+
+
+def test_version_info_jsonl(capsys):
+    version_info(MagicMock(json=False, jsonl=True))
+    out = json.loads(capsys.readouterr().out.strip())
+    assert "version" in out

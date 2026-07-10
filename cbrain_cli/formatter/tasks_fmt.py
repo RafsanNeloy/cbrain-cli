@@ -27,7 +27,7 @@ def print_task_data(tasks_data, args):
     formatted_tasks = [
         {
             "id": task.get("id", ""),
-            "type": task.get("type", "").replace("BoutiquesTask::", ""),
+            "type": (task.get("type") or "").replace("BoutiquesTask::", ""),
             "status": task.get("status", ""),
             "bourreau_id": task.get("bourreau_id", ""),
             "user_id": task.get("user_id", ""),
@@ -108,7 +108,7 @@ def print_task_details(task_data, args):
         print()
         print("DESCRIPTION")
         print("-" * 30)
-        for line in task_data.get("description").strip().split("\n"):
+        for line in str(task_data.get("description", "")).strip().split("\n"):
             print(line)
 
     # Display params if they exist.

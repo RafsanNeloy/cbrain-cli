@@ -136,7 +136,7 @@ def test_handle_project_switch_none_returns_1(monkeypatch):
 @pytest.mark.parametrize("upload_result,expected", FILE_UPLOAD_CASES)
 def test_handle_file_upload(monkeypatch, upload_result, expected):
     monkeypatch.setattr("cbrain_cli.handlers.files.upload_file", lambda _: upload_result)
-    monkeypatch.setattr("cbrain_cli.handlers.files_fmt.print_upload_result", lambda *_: None)
+    monkeypatch.setattr("cbrain_cli.handlers.files_fmt.print_upload_result", lambda *_, **__: None)
     result = handlers.handle_file_upload(make_args())
     assert result is expected if expected is None else result == expected
 

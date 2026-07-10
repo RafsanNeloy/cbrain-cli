@@ -1,12 +1,13 @@
 import functools
+import importlib.metadata
 import json
 import re
+import socket
 import urllib.error
 import urllib.parse
 import urllib.request
 
-# import importlib.metadata
-from cbrain_cli.config import DEFAULT_HEADERS, auth_headers, load_credentials
+from cbrain_cli.config import DEFAULT_HEADERS, DEFAULT_TIMEOUT, auth_headers, load_credentials
 
 credentials = load_credentials() or {}
 cbrain_url = credentials.get("cbrain_url")
@@ -136,11 +137,11 @@ def handle_connection_error(error):
                     error_data = json.loads(error_response)
                     if isinstance(error_data, dict):
                         # Look for common error message fields
-                        error_msg = (
+                        error_msg = str(
                             error_data.get("message")
                             or error_data.get("error")
                             or error_data.get("notice")
-                            or str(error_data)
+                            or error_data
                         )
                         # Check if this looks like a password change redirect
                         if "change_password" in error_msg:
@@ -186,7 +187,12 @@ def handle_connection_error(error):
         else:
             print(f"{status_description}: {error.reason}")
     elif isinstance(error, urllib.error.URLError):
-        if "Connection refused" in str(error):
+        if isinstance(error.reason, socket.timeout):
+            print(
+                f"Error: Request timed out after {DEFAULT_TIMEOUT}s. "
+                "Check your connection or set CBRAIN_TIMEOUT env var."
+            )
+        elif "Connection refused" in str(error):
             print(f"Error: Cannot connect to CBRAIN server at {cbrain_url}")
             print("Please check if the CBRAIN server is running and accessible.")
         else:
@@ -214,6 +220,10 @@ def handle_errors(func):
             return 1
         except urllib.error.URLError as e:
             handle_connection_error(e)
+            return 1
+        except socket.timeout as e:
+            # Read-stage timeouts are raised bare, not wrapped in URLError.
+            handle_connection_error(urllib.error.URLError(e))
             return 1
         except json.JSONDecodeError:
             print("Failed: Invalid response from server")
@@ -245,14 +255,15 @@ def version_info(args):
     int
         Exit code (0 for success, 1 for failure)
     """
-    print("cbrain cli client version 1.0")
-    # try:
-    #     cbrain_cli_version = importlib.metadata.version('cbrain-cli')
-    #     print(f"cbrain cli client version {cbrain_cli_version}")
-    #     return 0
-    # except importlib.metadata.PackageNotFoundError:
-    #     print("Warning: Could not determine version. Package may not be installed properly.")
-    #     return 1
+    try:
+        cbrain_cli_version = importlib.metadata.version("cbrain-cli")
+        if output_json(args, {"version": cbrain_cli_version}):
+            return 0
+        print(f"cbrain cli client version {cbrain_cli_version}")
+        return 0
+    except importlib.metadata.PackageNotFoundError:
+        print("Warning: Could not determine version. Package may not be installed properly.")
+        return 1
 
 
 def api_get(url, token, params=None):
@@ -262,7 +273,7 @@ def api_get(url, token, params=None):
     if params:
         url = f"{url}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, headers=auth_headers(token), method="GET")
-    with urllib.request.urlopen(req) as r:
+    with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as r:
         return json.loads(r.read().decode())
 
 
@@ -273,7 +284,7 @@ def api_post_form(url, form_data, headers=None):
     headers = headers or DEFAULT_HEADERS
     body = urllib.parse.urlencode(form_data).encode()
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    with urllib.request.urlopen(req) as r:
+    with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as r:
         return json.loads(r.read().decode())
 
 
@@ -287,7 +298,7 @@ def api_send(url, token, method="POST", payload=None):
         headers["Content-Type"] = "application/json"
         body = json.dumps(payload).encode()
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
-    with urllib.request.urlopen(req) as r:
+    with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as r:
         raw = r.read().decode()
         return (json.loads(raw) if raw.strip() else {}), r.status
 

@@ -35,10 +35,10 @@ def show_tool(args):
             api_token,
             {"page": str(page), "per_page": str(per_page)},
         )
-        if not tools_page:
+        if not tools_page or not isinstance(tools_page, list):
             break
         for tool in tools_page:
-            if tool.get("id") == tool_id:
+            if str(tool.get("id")) == str(tool_id):
                 return tool
         if len(tools_page) < per_page:
             break

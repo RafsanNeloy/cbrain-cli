@@ -9,7 +9,7 @@ from cbrain_cli.cli_utils import (
     json_printer,
     user_id,
 )
-from cbrain_cli.config import auth_headers
+from cbrain_cli.config import DEFAULT_TIMEOUT, auth_headers
 
 
 def user_details(user_id):
@@ -33,7 +33,7 @@ def user_details(user_id):
     )
 
     try:
-        with urllib.request.urlopen(user_request) as response:
+        with urllib.request.urlopen(user_request, timeout=DEFAULT_TIMEOUT) as response:
             user_data = json.loads(response.read().decode("utf-8"))
             return user_data
 
@@ -79,8 +79,8 @@ def whoami_user(args):
     # Handle JSON output first
     if getattr(args, "json", False):
         output = {
-            "login": user_data["login"],
-            "full_name": user_data["full_name"],
+            "login": user_data.get("login", ""),
+            "full_name": user_data.get("full_name", ""),
             "server": cbrain_url,
         }
         json_printer(output)
@@ -95,7 +95,7 @@ def whoami_user(args):
         )
 
         try:
-            with urllib.request.urlopen(session_request) as response:
+            with urllib.request.urlopen(session_request, timeout=DEFAULT_TIMEOUT) as response:
                 session_data = json.loads(response.read().decode("utf-8"))
 
                 # Verify local credentials match server response.
@@ -115,4 +115,6 @@ def whoami_user(args):
             print(f"Error verifying session: {e}")
             return 1
 
-    print(f"Current user: {user_data['login']} ({user_data['full_name']}) on server {cbrain_url}")
+    login = user_data.get("login", "")
+    full_name = user_data.get("full_name", "")
+    print(f"Current user: {login} ({full_name}) on server {cbrain_url}")

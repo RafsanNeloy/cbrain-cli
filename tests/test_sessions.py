@@ -9,10 +9,30 @@ from cbrain_cli.sessions import create_session, logout_session
 
 
 def test_create_session_already_logged_in(sessions_creds_file, capsys):
-    sessions_creds_file.write_text("{}")
+    import json
+
+    sessions_creds_file.write_text(
+        json.dumps({"api_token": "tok", "cbrain_url": "http://localhost:3000"})
+    )
     result = create_session(argparse.Namespace())
     assert result == 1
     assert "Already logged in" in capsys.readouterr().out
+
+
+def test_create_session_empty_credentials_file_allows_login(
+    sessions_creds_file, monkeypatch, capsys
+):
+    """Empty/corrupt credentials file should not block re-login."""
+    sessions_creds_file.write_text("{}")
+    inputs = iter(["http://localhost:3000", "admin"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    monkeypatch.setattr("getpass.getpass", lambda _: "secret")
+    monkeypatch.setattr(
+        "cbrain_cli.sessions.api_post_form",
+        lambda *_a, **_k: {"cbrain_api_token": "newtok", "user_id": 1},
+    )
+    result = create_session(argparse.Namespace())
+    assert result == 0
 
 
 def test_create_session_empty_username_raises(monkeypatch, sessions_creds_file):

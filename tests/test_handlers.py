@@ -101,10 +101,10 @@ def test_handle_project_show_no_project_prints_message(monkeypatch, capsys):
     assert "No active project." in capsys.readouterr().out
 
 
-def test_handle_project_unswitch_always_returns_none(monkeypatch):
+def test_handle_project_unswitch_returns_1_on_none(monkeypatch):
     monkeypatch.setattr("cbrain_cli.handlers.projects.unswitch_project", lambda _: None)
     monkeypatch.setattr("cbrain_cli.handlers.projects_fmt.print_unswitch_result", lambda *_: None)
-    assert handle_project_unswitch(make_args()) is None
+    assert handle_project_unswitch(make_args()) == 1
 
 
 def test_handle_project_switch_json_output(monkeypatch, capsys):

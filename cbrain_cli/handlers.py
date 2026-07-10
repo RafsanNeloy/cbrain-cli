@@ -5,7 +5,7 @@ This module contains all the handler functions that process CLI commands
 and format their output appropriately.
 """
 
-from cbrain_cli.cli_utils import json_printer
+from cbrain_cli.cli_utils import json_printer, output_json
 from cbrain_cli.data import (
     background_activities,
     data_providers,
@@ -56,7 +56,7 @@ def handle_file_upload(args):
     result = files.upload_file(args)
     if result is None:
         return 1
-    files_fmt.print_upload_result(*result)
+    files_fmt.print_upload_result(*result, args=args)
     if result[1] not in (200, 201):
         return 1
 
@@ -66,7 +66,7 @@ def handle_file_copy(args):
     result = files.copy_file(args)
     if result is None:
         return 1
-    files_fmt.print_move_copy_result(*result, operation="copy")
+    files_fmt.print_move_copy_result(*result, operation="copy", args=args)
     if result[1] not in (200, 201):
         return 1
 
@@ -76,7 +76,7 @@ def handle_file_move(args):
     result = files.move_file(args)
     if result is None:
         return 1
-    files_fmt.print_move_copy_result(*result, operation="move")
+    files_fmt.print_move_copy_result(*result, operation="move", args=args)
     if result[1] not in (200, 201):
         return 1
 
@@ -111,6 +111,8 @@ def handle_dataprovider_is_alive(args):
     result = data_providers.is_alive(args)
     if result is None:
         return 1
+    if output_json(args, result):
+        return
     json_printer(result)
 
 
@@ -119,6 +121,8 @@ def handle_dataprovider_delete_unregistered(args):
     result = data_providers.delete_unregistered_files(args)
     if result is None:
         return 1
+    if output_json(args, result):
+        return
     json_printer(result)
 
 
@@ -161,6 +165,8 @@ def handle_project_show(args):
 def handle_project_unswitch(args):
     """Unswitch from current project context."""
     result = projects.unswitch_project(args)
+    if result is None:
+        return 1
     projects_fmt.print_unswitch_result(result, args)
 
 
@@ -229,7 +235,12 @@ def handle_tag_create(args):
     if result is None:
         return 1
     tags_fmt.print_tag_operation_result(
-        "create", success=result[1], error_msg=result[2], response_status=result[3]
+        "create",
+        success=result[1],
+        error_msg=result[2],
+        response_status=result[3],
+        args=args,
+        response_data=result[0],
     )
     if not result[1]:
         return 1
@@ -246,6 +257,8 @@ def handle_tag_update(args):
         success=result[1],
         error_msg=result[2],
         response_status=result[3],
+        args=args,
+        response_data=result[0],
     )
     if not result[1]:
         return 1
@@ -262,6 +275,7 @@ def handle_tag_delete(args):
         success=result[0],
         error_msg=result[1],
         response_status=result[2],
+        args=args,
     )
     if not result[0]:
         return 1
