@@ -11,7 +11,7 @@ from cbrain_cli.cli_utils import (
     cbrain_url,
     pagination,
 )
-from cbrain_cli.config import auth_headers
+from cbrain_cli.config import DEFAULT_TIMEOUT, auth_headers
 
 
 def show_file(args):
@@ -50,7 +50,7 @@ def upload_file(args):
         (response_data, response_status, file_name, file_size) or None if error
     """
     # Check if file exists.
-    if not os.path.exists(args.file_path):
+    if not os.path.isfile(args.file_path):
         raise CliValidationError(f"File not found: {args.file_path}", field="file_path")
 
     if args.group_id is None:
@@ -92,7 +92,7 @@ def upload_file(args):
     request = urllib.request.Request(
         f"{cbrain_url}/userfiles", data=body, headers=headers, method="POST"
     )
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, timeout=DEFAULT_TIMEOUT) as response:
         response_data = json.loads(response.read().decode("utf-8"))
         return response_data, response.status, file_name, file_size, args.data_provider
 

@@ -29,11 +29,7 @@ def print_activities_list(activities_data, args):
             "remote_resource_id": a.get("remote_resource_id", ""),
             "status": a.get("status", ""),
             "created_at": (
-                a.get("created_at", "").split("T")[0]
-                + " "
-                + a.get("created_at", "").split("T")[1].split(".")[0]
-                if a.get("created_at")
-                else ""
+                a["created_at"].replace("T", " ").split(".")[0] if a.get("created_at") else ""
             ),
             "items": ",".join(map(str, a.get("items", []))) if a.get("items") else "",
             "num_successes": a.get("num_successes", 0),

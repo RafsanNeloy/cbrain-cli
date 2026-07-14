@@ -15,6 +15,12 @@ SESSION_FILE_NAME = "credentials.json"
 CREDENTIALS_FILE = SESSION_FILE_DIR / SESSION_FILE_NAME
 DEFAULT_CREDENTIALS_MODE = 0o600
 
+# HTTP request timeout in seconds; override with CBRAIN_TIMEOUT env var.
+try:
+    DEFAULT_TIMEOUT = max(1, int(os.environ.get("CBRAIN_TIMEOUT", "30")))
+except ValueError:
+    DEFAULT_TIMEOUT = 30
+
 # HTTP headers.
 DEFAULT_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded",

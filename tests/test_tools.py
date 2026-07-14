@@ -16,7 +16,7 @@ def _patch_tools_locals(monkeypatch):
 def test_list_tools_passes_page_and_per_page(monkeypatch):
     captured = {}
 
-    def fake_urlopen(request):
+    def fake_urlopen(request, **kwargs):
         captured["url"] = request.full_url
         mock_http_response = MagicMock()
         mock_http_response.__enter__.return_value.read.return_value = b"[]"

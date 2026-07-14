@@ -78,7 +78,7 @@ def capture_urlopen(monkeypatch):
     """
 
     def configure(response_json=None, status=200, raw_body=None, side_effect=None):
-        def fake_urlopen(request):
+        def fake_urlopen(request, **kwargs):
             captured["url"] = request.full_url
             captured["headers"] = request.headers
             captured["data"] = request.data

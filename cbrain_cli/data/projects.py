@@ -42,7 +42,9 @@ def switch_project(args):
             f"Invalid group ID '{group_id}'. Must be a number or 'all'", field="group_id"
         ) from None
 
-    api_send(f"{cbrain_url}/groups/switch?id={group_id}", api_token)
+    _, switch_status = api_send(f"{cbrain_url}/groups/switch?id={group_id}", api_token)
+    if switch_status not in (200, 201, 204):
+        raise CliApiError(f"Failed to switch project (HTTP {switch_status})")
     group_data = api_get(f"{cbrain_url}/groups/{group_id}", api_token)
 
     credentials = load_credentials()

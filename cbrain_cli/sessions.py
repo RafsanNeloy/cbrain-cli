@@ -29,8 +29,10 @@ def create_session(args):
     """
 
     if CREDENTIALS_FILE.exists():
-        print("Already logged in. Use 'cbrain logout' to logout.")
-        return 1
+        creds = load_credentials()
+        if creds and creds.get("api_token") and creds.get("cbrain_url"):
+            print("Already logged in. Use 'cbrain logout' to logout.")
+            return 1
 
     # Get user input.
     cbrain_url = input("Enter CBRAIN server base URL [default: localhost:3000]: ").strip()

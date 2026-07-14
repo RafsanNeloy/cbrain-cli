@@ -58,7 +58,12 @@ def print_tag_details(tag_data, args):
 
 
 def print_tag_operation_result(
-    operation, tag_id=None, success=True, error_msg=None, response_status=None
+    operation,
+    tag_id=None,
+    success=True,
+    error_msg=None,
+    response_status=None,
+    args=None,
 ):
     """
     Print result of a tag operation (create, update, delete).
@@ -75,7 +80,19 @@ def print_tag_operation_result(
         Error message if operation failed
     response_status : int, optional
         HTTP response status code if operation failed
+    args : argparse.Namespace, optional
+        Command line arguments, including the --json flag
     """
+    if args is not None and not success:
+        structured = {
+            "operation": operation,
+            "success": success,
+            "tag_id": tag_id,
+            "error": error_msg,
+        }
+        if output_json(args, structured):
+            return
+
     if success:
         if operation == "create":
             print("Tag created successfully!")
