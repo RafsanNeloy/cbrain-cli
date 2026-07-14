@@ -120,9 +120,7 @@ def handle_dataprovider_is_alive(args):
 
 def handle_dataprovider_delete_unregistered(args):
     """Remove unregistered files from a data provider and display the cleanup results."""
-    if not confirm_destructive(
-        args, f"Delete unregistered files on data provider {args.id}?"
-    ):
+    if not confirm_destructive(args, f"Delete unregistered files on data provider {args.id}?"):
         return 1
     result = data_providers.delete_unregistered_files(args)
     if result is None:

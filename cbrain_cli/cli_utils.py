@@ -336,11 +336,7 @@ def confirm_destructive(args, prompt):
     if getattr(args, "yes", False):
         return True
     # JSON/JSONL must not mix with a prompt; pipes/EOF also never auto-confirm.
-    if (
-        getattr(args, "json", False)
-        or getattr(args, "jsonl", False)
-        or not sys.stdin.isatty()
-    ):
+    if getattr(args, "json", False) or getattr(args, "jsonl", False) or not sys.stdin.isatty():
         raise CliValidationError(
             "Refusing destructive action without confirmation; pass --yes",
             field="--yes",

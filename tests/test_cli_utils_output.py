@@ -116,19 +116,13 @@ def test_confirm_destructive_json_requires_yes(monkeypatch):
 def test_confirm_destructive_tty_accepts_y(monkeypatch):
     monkeypatch.setattr("sys.stdin.isatty", lambda: True)
     monkeypatch.setattr("builtins.input", lambda _: "y")
-    assert (
-        confirm_destructive(MagicMock(yes=False, json=False, jsonl=False), "Delete?")
-        is True
-    )
+    assert confirm_destructive(MagicMock(yes=False, json=False, jsonl=False), "Delete?") is True
 
 
 def test_confirm_destructive_tty_declines(monkeypatch, capsys):
     monkeypatch.setattr("sys.stdin.isatty", lambda: True)
     monkeypatch.setattr("builtins.input", lambda _: "n")
-    assert (
-        confirm_destructive(MagicMock(yes=False, json=False, jsonl=False), "Delete?")
-        is False
-    )
+    assert confirm_destructive(MagicMock(yes=False, json=False, jsonl=False), "Delete?") is False
     assert "Aborted." in capsys.readouterr().out
 
 
@@ -139,8 +133,5 @@ def test_confirm_destructive_tty_eof(monkeypatch, capsys):
         raise EOFError
 
     monkeypatch.setattr("builtins.input", boom)
-    assert (
-        confirm_destructive(MagicMock(yes=False, json=False, jsonl=False), "Delete?")
-        is False
-    )
+    assert confirm_destructive(MagicMock(yes=False, json=False, jsonl=False), "Delete?") is False
     assert "Aborted." in capsys.readouterr().out
