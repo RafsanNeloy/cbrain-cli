@@ -89,7 +89,7 @@ TAG_HANDLER_CASES = [
         "handle_tag_delete",
         "cbrain_cli.handlers.tags.delete_tag",
         "cbrain_cli.handlers.tags_fmt.print_tag_operation_result",
-        make_args(tag_id=1),
+        make_args(tag_id=1, yes=True),
         (True, None, 200),
         None,
     ),
@@ -115,7 +115,7 @@ def test_handle_dataprovider_delete_unregistered_prints_json(monkeypatch, capsys
         "cbrain_cli.handlers.data_providers.delete_unregistered_files",
         lambda _: {"deleted": 2},
     )
-    handlers.handle_dataprovider_delete_unregistered(make_args(id=1))
+    handlers.handle_dataprovider_delete_unregistered(make_args(id=1, yes=True))
     assert '"deleted": 2' in capsys.readouterr().out
 
 
@@ -166,7 +166,21 @@ def test_handle_file_delete_success(monkeypatch):
         lambda _: {"deleted": 1},
     )
     monkeypatch.setattr("cbrain_cli.handlers.files_fmt.print_delete_result", lambda *_: None)
-    assert handlers.handle_file_delete(make_args(file_id=1)) is None
+    assert handlers.handle_file_delete(make_args(file_id=1, yes=True)) is None
+
+
+def test_handle_file_delete_aborts_without_yes(monkeypatch):
+    called = []
+    monkeypatch.setattr(
+        "cbrain_cli.handlers.files.delete_file",
+        lambda _: called.append(True) or {"deleted": 1},
+    )
+    monkeypatch.setattr(
+        "cbrain_cli.handlers.confirm_destructive",
+        lambda *_: False,
+    )
+    assert handlers.handle_file_delete(make_args(file_id=1)) == 1
+    assert called == []
 
 
 def test_handle_tool_config_boutiques_descriptor(monkeypatch, capsys):

@@ -16,22 +16,24 @@ Stderr:
 ############################
 Command: cbrain        version
 Status: 0
-Stdout: 30 bytes
+Stdout: 32 bytes
 Stderr: 0 bytes
 
 Stdout:
-cbrain cli client version 1.0
+cbrain cli client version 0.1.0
 Stderr:
 (No output)
 
 ############################
 Command: cbrain --json version
 Status: 0
-Stdout: 30 bytes
+Stdout: 25 bytes
 Stderr: 0 bytes
 
 Stdout:
-cbrain cli client version 1.0
+{
+  "version": "0.1.0"
+}
 Stderr:
 (No output)
 
@@ -74,22 +76,24 @@ Stderr:
 ############################
 Command: cbrain        version
 Status: 0
-Stdout: 30 bytes
+Stdout: 32 bytes
 Stderr: 0 bytes
 
 Stdout:
-cbrain cli client version 1.0
+cbrain cli client version 0.1.0
 Stderr:
 (No output)
 
 ############################
 Command: cbrain --json version
 Status: 0
-Stdout: 30 bytes
+Stdout: 25 bytes
 Stderr: 0 bytes
 
 Stdout:
-cbrain cli client version 1.0
+{
+  "version": "0.1.0"
+}
 Stderr:
 (No output)
 
@@ -744,7 +748,7 @@ Stderr:
 (No output)
 
 ############################
-Command: cbrain         tag delete 99
+Command: cbrain         tag delete 99 --yes
 Status: 0
 Stdout: 29 bytes
 Stderr: 0 bytes
@@ -1638,7 +1642,7 @@ Stderr:
 (No output)
 
 ############################
-Command: cbrain         file delete 5
+Command: cbrain         file delete 5 --yes
 Status: 0
 Stdout: 71 bytes
 Stderr: 0 bytes

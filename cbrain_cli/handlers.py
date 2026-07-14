@@ -5,7 +5,7 @@ This module contains all the handler functions that process CLI commands
 and format their output appropriately.
 """
 
-from cbrain_cli.cli_utils import json_printer, output_json
+from cbrain_cli.cli_utils import confirm_destructive, json_printer, output_json
 from cbrain_cli.data import (
     background_activities,
     data_providers,
@@ -83,6 +83,8 @@ def handle_file_move(args):
 
 def handle_file_delete(args):
     """Delete a specific file from CBRAIN and display the deletion status."""
+    if not confirm_destructive(args, f"Delete file {args.file_id}?"):
+        return 1
     result = files.delete_file(args)
     if result is None:
         return 1
@@ -118,6 +120,10 @@ def handle_dataprovider_is_alive(args):
 
 def handle_dataprovider_delete_unregistered(args):
     """Remove unregistered files from a data provider and display the cleanup results."""
+    if not confirm_destructive(
+        args, f"Delete unregistered files on data provider {args.id}?"
+    ):
+        return 1
     result = data_providers.delete_unregistered_files(args)
     if result is None:
         return 1
@@ -240,7 +246,6 @@ def handle_tag_create(args):
         error_msg=result[2],
         response_status=result[3],
         args=args,
-        response_data=result[0],
     )
     if not result[1]:
         return 1
@@ -258,7 +263,6 @@ def handle_tag_update(args):
         error_msg=result[2],
         response_status=result[3],
         args=args,
-        response_data=result[0],
     )
     if not result[1]:
         return 1
@@ -266,6 +270,8 @@ def handle_tag_update(args):
 
 def handle_tag_delete(args):
     """Delete a specific tag from CBRAIN and display the deletion result."""
+    if not confirm_destructive(args, f"Delete tag {args.tag_id}?"):
+        return 1
     result = tags.delete_tag(args)
     if result is None:
         return 1

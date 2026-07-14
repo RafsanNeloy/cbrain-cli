@@ -157,6 +157,9 @@ def build_parser():
     # file delete
     file_delete_parser = file_subparsers.add_parser("delete", help="Delete a file")
     file_delete_parser.add_argument("file_id", type=int, help="ID of the file to delete")
+    file_delete_parser.add_argument(
+        "-y", "--yes", action="store_true", help="Skip confirmation prompt"
+    )
     file_delete_parser.set_defaults(func=handle_errors(handle_file_delete))
 
     # Data provider commands
@@ -201,6 +204,9 @@ def build_parser():
     )
     dataprovider_delete_unregistered_files_parser.add_argument(
         "id", type=int, help="Data provider ID"
+    )
+    dataprovider_delete_unregistered_files_parser.add_argument(
+        "-y", "--yes", action="store_true", help="Skip confirmation prompt"
     )
     dataprovider_delete_unregistered_files_parser.set_defaults(
         func=handle_errors(handle_dataprovider_delete_unregistered)
@@ -332,6 +338,9 @@ def build_parser():
         "tag_id",
         type=int,
         help="Tag ID to delete",
+    )
+    tag_delete_parser.add_argument(
+        "-y", "--yes", action="store_true", help="Skip confirmation prompt"
     )
     tag_delete_parser.set_defaults(func=handle_errors(handle_tag_delete))
 

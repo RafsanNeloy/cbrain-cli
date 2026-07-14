@@ -1,11 +1,14 @@
+import configparser
 import functools
 import importlib.metadata
 import json
 import re
 import socket
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from cbrain_cli.config import DEFAULT_HEADERS, DEFAULT_TIMEOUT, auth_headers, load_credentials
 
@@ -245,6 +248,9 @@ def version_info(args):
     """
     Display the CLI version information.
 
+    Prefer installed package metadata; fall back to setup.cfg when running
+    from a source tree without install.
+
     Parameters
     ----------
     args : argparse.Namespace
@@ -257,13 +263,15 @@ def version_info(args):
     """
     try:
         cbrain_cli_version = importlib.metadata.version("cbrain-cli")
-        if output_json(args, {"version": cbrain_cli_version}):
-            return 0
-        print(f"cbrain cli client version {cbrain_cli_version}")
-        return 0
     except importlib.metadata.PackageNotFoundError:
-        print("Warning: Could not determine version. Package may not be installed properly.")
-        return 1
+        cfg = configparser.ConfigParser()
+        cfg.read(Path(__file__).resolve().parents[1] / "setup.cfg")
+        cbrain_cli_version = cfg["metadata"]["version"]
+
+    if output_json(args, {"version": cbrain_cli_version}):
+        return 0
+    print(f"cbrain cli client version {cbrain_cli_version}")
+    return 0
 
 
 def api_get(url, token, params=None):
@@ -313,6 +321,38 @@ def output_json(args, data):
     if getattr(args, "jsonl", False):
         jsonl_printer(data)
         return True
+    return False
+
+
+def confirm_destructive(args, prompt):
+    """
+    Gate destructive actions: ``--yes`` skips, TTY asks, otherwise refuse.
+
+    Returns
+    -------
+    bool
+        True to proceed, False if the user declined an interactive prompt.
+    """
+    if getattr(args, "yes", False):
+        return True
+    # JSON/JSONL must not mix with a prompt; pipes/EOF also never auto-confirm.
+    if (
+        getattr(args, "json", False)
+        or getattr(args, "jsonl", False)
+        or not sys.stdin.isatty()
+    ):
+        raise CliValidationError(
+            "Refusing destructive action without confirmation; pass --yes",
+            field="--yes",
+        )
+    try:
+        answer = input(f"{prompt} [y/N]: ").strip().lower()
+    except EOFError:
+        print("Aborted.")
+        return False
+    if answer in ("y", "yes"):
+        return True
+    print("Aborted.")
     return False
 
 
