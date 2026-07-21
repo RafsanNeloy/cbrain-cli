@@ -14,13 +14,18 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 
 ## Progress
 
-- Phase 1 items 2-7 completed in PR #45.
+- Phase 1 items 1-7 completed in PR #45.
 - Phase 2 item 8 completed in PR #45.
+- Phase 2 item 9 completed in PR #48.
+- Phase 2 items 10-12 completed in PR #49.
 - Phase 2 item 13 completed in PR #46.
+- Phase 3 items 14 and 17 completed in PR #49.
 
 # Phase 1: Correctness Fixes
 
 ## 1. Fix `task list bourreau-id <id>` filtering
+
+**Status:** Completed in PR #45.
 
 **Problem:** The parser accepts `bourreau-id`, but the data code checks `bourreau_id`, so the filter is ignored.
 
@@ -125,6 +130,8 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 
 ## 9. Add unit tests beside capture tests
 
+**Status:** Completed in PR #48.
+
 **Problem:** Capture tests protect end-to-end CLI output, but they do not isolate parsing, validation, request construction, handler contracts, or falsey-but-valid responses.
 
 **Do:**
@@ -138,6 +145,8 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 
 ## 10. Add HTTP timeouts
 
+**Status:** Completed in PR #49.
+
 **Problem:** `urlopen()` calls have no timeout and can hang indefinitely.
 
 **Do:**
@@ -149,6 +158,8 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 
 ## 11. Protect credentials file permissions
 
+**Status:** Completed in PR #49.
+
 **Problem:** API tokens are stored as plain JSON without explicit permission handling.
 
 **Do:**
@@ -159,6 +170,8 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 **Verify:** On POSIX, credentials are written with private permissions.
 
 ## 12. Use one source of truth for versioning
+
+**Status:** Completed in PR #49.
 
 **Problem:** `version_info()` hardcodes `1.0`, while repository tags may differ.
 
@@ -185,6 +198,8 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 # Phase 3: Output and UX Consistency
 
 ## 14. Audit global `--json` and `--jsonl` behavior
+
+**Status:** Completed in PR #49.
 
 **Problem:** Several commands ignore global output flags or always print JSON/plain text.
 
@@ -221,6 +236,8 @@ For the student-facing 3-month scope, use `summer-student-scope.md`. That docume
 **Verify:** `cbrain --help` and subcommand help read consistently.
 
 ## 17. Clarify destructive command safety
+
+**Status:** Completed in PR #49.
 
 **Problem:** Delete and cleanup commands need clear confirmation, force, partial success, and script behavior.
 
