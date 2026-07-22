@@ -1,15 +1,11 @@
-import json
 import urllib.error
-import urllib.request
 
 from cbrain_cli.cli_utils import (
-    api_token,
-    cbrain_url,
+    api_get,
+    get_auth,
     handle_connection_error,
     json_printer,
-    user_id,
 )
-from cbrain_cli.config import DEFAULT_TIMEOUT, auth_headers
 
 
 def user_details(user_id):
@@ -26,17 +22,8 @@ def user_details(user_id):
     dict or None
         User data dictionary, or None if the request fails.
     """
-    user_endpoint = f"{cbrain_url}/users/{user_id}"
-
-    user_request = urllib.request.Request(
-        user_endpoint, headers=auth_headers(api_token), method="GET"
-    )
-
     try:
-        with urllib.request.urlopen(user_request, timeout=DEFAULT_TIMEOUT) as response:
-            user_data = json.loads(response.read().decode("utf-8"))
-            return user_data
-
+        return api_get(f"/users/{user_id}")
     except (urllib.error.URLError, urllib.error.HTTPError) as e:
         handle_connection_error(e)
         return None
@@ -61,6 +48,7 @@ def whoami_user(args):
         Exit code on credential or API failure; otherwise None after printing.
     """
     version = getattr(args, "version", False)
+    cbrain_url, api_token, user_id = get_auth()
 
     # Check if we have credentials first
     if user_id is None or cbrain_url is None or api_token is None:
@@ -88,25 +76,18 @@ def whoami_user(args):
 
     if version:
         # Verify token by making a session request.
-        session_endpoint = f"{cbrain_url}/session"
-
-        session_request = urllib.request.Request(
-            session_endpoint, headers=auth_headers(api_token), method="GET"
-        )
-
         try:
-            with urllib.request.urlopen(session_request, timeout=DEFAULT_TIMEOUT) as response:
-                session_data = json.loads(response.read().decode("utf-8"))
+            session_data = api_get("/session")
 
-                # Verify local credentials match server response.
-                remote_user_id = session_data.get("user_id")
-                remote_token = session_data.get("cbrain_api_token")
+            # Verify local credentials match server response.
+            remote_user_id = session_data.get("user_id")
+            remote_token = session_data.get("cbrain_api_token")
 
-                if str(remote_user_id) != str(user_id):
-                    print(f"WARNING: User ID mismatch - Local: {user_id}, Remote: {remote_user_id}")
+            if str(remote_user_id) != str(user_id):
+                print(f"WARNING: User ID mismatch - Local: {user_id}, Remote: {remote_user_id}")
 
-                if remote_token != api_token:
-                    print("WARNING: Token mismatch - tokens don't match")
+            if remote_token != api_token:
+                print("WARNING: Token mismatch - tokens don't match")
 
         except (urllib.error.URLError, urllib.error.HTTPError) as e:
             handle_connection_error(e)

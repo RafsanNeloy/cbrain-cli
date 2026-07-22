@@ -5,8 +5,6 @@ from cbrain_cli.cli_utils import (
     CliValidationError,
     api_get,
     api_send,
-    api_token,
-    cbrain_url,
 )
 from cbrain_cli.config import load_credentials, save_credentials
 
@@ -42,10 +40,10 @@ def switch_project(args):
             f"Invalid group ID '{group_id}'. Must be a number or 'all'", field="group_id"
         ) from None
 
-    _, switch_status = api_send(f"{cbrain_url}/groups/switch?id={group_id}", api_token)
+    _, switch_status = api_send(f"/groups/switch?id={group_id}")
     if switch_status not in (200, 201, 204):
         raise CliApiError(f"Failed to switch project (HTTP {switch_status})")
-    group_data = api_get(f"{cbrain_url}/groups/{group_id}", api_token)
+    group_data = api_get(f"/groups/{group_id}")
 
     credentials = load_credentials()
     if credentials is not None:
@@ -79,7 +77,7 @@ def unswitch_project(args):
         previous_group_name = credentials.get("current_group_name")
 
     if previous_group_id:
-        api_send(f"{cbrain_url}/groups/switch", api_token)
+        api_send("/groups/switch")
 
     if credentials is not None:
         credentials.pop("current_group_id", None)
@@ -114,7 +112,7 @@ def show_project(args):
     if project_id:
         # Show specific project by ID
         try:
-            return api_get(f"{cbrain_url}/groups/{project_id}", api_token)
+            return api_get(f"/groups/{project_id}")
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 raise CliApiError(f"Project with ID {project_id} not found") from None
@@ -129,7 +127,7 @@ def show_project(args):
         return None
 
     try:
-        return api_get(f"{cbrain_url}/groups/{current_group_id}", api_token)
+        return api_get(f"/groups/{current_group_id}")
     except urllib.error.HTTPError as e:
         if e.code == 404:
             credentials.pop("current_group_id", None)
@@ -153,4 +151,4 @@ def list_projects(args):
     list
         List of project dictionaries
     """
-    return api_get(f"{cbrain_url}/groups", api_token)
+    return api_get("/groups")

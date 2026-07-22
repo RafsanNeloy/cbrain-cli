@@ -84,14 +84,9 @@ def test_logout_session_corrupt_file_removes_it(sessions_creds_file, capsys):
     assert not sessions_creds_file.exists()
 
 
-def test_logout_session_no_api_token_removes_file_without_http(
-    monkeypatch, sessions_creds_file, capsys
-):
-    """When sessions module-local api_token is None, logout removes file with no HTTP call."""
-    sessions_creds_file.write_text('{"api_token": "tok", "cbrain_url": "http://localhost:3000"}')
-    # explicitly null out the module-local copies (not reset by _reset_globals)
-    monkeypatch.setattr("cbrain_cli.sessions.api_token", None)
-    monkeypatch.setattr("cbrain_cli.sessions.cbrain_url", None)
+def test_logout_session_no_api_token_removes_file_without_http(sessions_creds_file, capsys):
+    """Incomplete credentials file is removed with no HTTP call."""
+    sessions_creds_file.write_text('{"cbrain_url": "http://localhost:3000"}')
     result = logout_session(argparse.Namespace())
     assert result == 0
     assert not sessions_creds_file.exists()
@@ -101,8 +96,6 @@ def test_logout_session_success_sends_delete_and_removes_file(
     monkeypatch, sessions_creds_file, capsys
 ):
     sessions_creds_file.write_text('{"api_token": "tok", "cbrain_url": "http://localhost:3000"}')
-    monkeypatch.setattr("cbrain_cli.sessions.api_token", "tok")
-    monkeypatch.setattr("cbrain_cli.sessions.cbrain_url", "http://localhost:3000")
     monkeypatch.setattr("cbrain_cli.sessions.api_send", lambda *_, **__: ({}, 200))
     result = logout_session(argparse.Namespace())
     assert result == 0
@@ -112,8 +105,6 @@ def test_logout_session_success_sends_delete_and_removes_file(
 
 def test_logout_session_server_401_still_removes_file(monkeypatch, sessions_creds_file, capsys):
     sessions_creds_file.write_text('{"api_token": "tok", "cbrain_url": "http://localhost:3000"}')
-    monkeypatch.setattr("cbrain_cli.sessions.api_token", "tok")
-    monkeypatch.setattr("cbrain_cli.sessions.cbrain_url", "http://localhost:3000")
     monkeypatch.setattr(
         "cbrain_cli.sessions.api_send",
         MagicMock(

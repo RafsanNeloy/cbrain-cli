@@ -7,13 +7,13 @@ from cbrain_cli.data.data_providers import (
     list_data_providers,
     show_data_provider,
 )
+from tests.conftest import install_auth
 from tests.conftest import make_args as _args
-from tests.conftest import patch_module_locals
 
 
 @pytest.fixture(autouse=True)
-def _patch_locals(monkeypatch):
-    patch_module_locals(monkeypatch, "cbrain_cli.data.data_providers")
+def _patch_locals():
+    install_auth()
 
 
 def test_list_data_providers_returns_list(mock_urlopen):

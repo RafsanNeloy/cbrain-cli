@@ -11,7 +11,7 @@ from cbrain_cli.handlers import (
     handle_task_show,
 )
 from cbrain_cli.users import user_details, whoami_user
-from tests.conftest import make_args, parse_json_output, patch_module_locals
+from tests.conftest import install_auth, make_args, parse_json_output
 
 LIST_HANDLER_CASES = [
     (
@@ -153,10 +153,13 @@ def test_list_handler_validation_error_returns_1(monkeypatch):
     assert handle_errors(handle_task_list)(make_args()) == 1
 
 
-def test_user_details_sends_current_token_in_header(monkeypatch, capture_urlopen):
-    """auth_headers(api_token) is called inside user_details, not at import time."""
-    patch_module_locals(monkeypatch, "cbrain_cli.users")
-    monkeypatch.setattr("cbrain_cli.users.api_token", "new-token")
+def test_user_details_sends_current_token_in_header(
+    monkeypatch, capture_urlopen, creds_file
+):
+    """auth_headers(api_token) uses call-time credentials, not import-time globals."""
+    from tests.conftest import write_auth_credentials
+
+    write_auth_credentials(creds_file, api_token="new-token")
 
     configure, captured = capture_urlopen
     configure({"id": 1, "login": "admin"})
@@ -167,7 +170,7 @@ def test_user_details_sends_current_token_in_header(monkeypatch, capture_urlopen
 
 def test_whoami_user_version_does_not_print_debug_lines(monkeypatch, capsys):
     """whoami_user with version=True must not print DEBUG: lines."""
-    patch_module_locals(monkeypatch, "cbrain_cli.users", user_id=1)
+    install_auth(user_id=1)
 
     monkeypatch.setattr(
         "cbrain_cli.users.user_details",

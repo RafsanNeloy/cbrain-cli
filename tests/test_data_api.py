@@ -2,8 +2,8 @@ import urllib.error
 
 import pytest
 
-from cbrain_cli.cli_utils import api_get, api_post_form, api_send
-from tests.conftest import TOKEN, URL
+from cbrain_cli.cli_utils import api_get, api_post_form, api_post_multipart, api_send
+from tests.conftest import TOKEN, URL, install_auth
 
 
 def test_api_get_returns_parsed_json(mock_urlopen):
@@ -82,3 +82,24 @@ def test_api_send_propagates_http_error(capture_urlopen):
     )
     with pytest.raises(urllib.error.HTTPError):
         api_send(f"{URL}/tags", TOKEN)
+
+
+def test_api_get_relative_path_uses_call_time_auth(capture_urlopen):
+    install_auth()
+    configure, captured = capture_urlopen
+    configure({})
+    api_get("/tools")
+    assert captured["url"] == f"{URL}/tools"
+    assert captured["headers"].get("Authorization") == f"Bearer {TOKEN}"
+
+
+def test_api_post_multipart_sets_content_type_and_auth(capture_urlopen):
+    install_auth()
+    configure, captured = capture_urlopen
+    configure({"id": 1}, status=201)
+    data, status = api_post_multipart("/userfiles", b"body", "multipart/form-data; boundary=x")
+    assert data == {"id": 1}
+    assert status == 201
+    assert captured["url"] == f"{URL}/userfiles"
+    assert "multipart/form-data" in captured["headers"].get("Content-type", "")
+    assert captured["headers"].get("Authorization") == f"Bearer {TOKEN}"

@@ -10,13 +10,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from cbrain_cli.config import DEFAULT_HEADERS, DEFAULT_TIMEOUT, auth_headers, load_credentials
-
-credentials = load_credentials() or {}
-cbrain_url = credentials.get("cbrain_url")
-api_token = credentials.get("api_token")
-user_id = credentials.get("user_id")
-cbrain_timestamp = credentials.get("timestamp")
+from cbrain_cli import config as cbrain_config
+from cbrain_cli.config import DEFAULT_HEADERS, DEFAULT_TIMEOUT, auth_headers
 
 PAGINATABLE_ACTIONS = {
     ("file", "list"),
@@ -62,11 +57,32 @@ class CliResponseError(Exception):
     """
 
 
+def get_auth():
+    """
+    Return (cbrain_url, api_token, user_id) from current credentials file.
+    """
+    creds = cbrain_config.load_credentials() or {}
+    return creds.get("cbrain_url"), creds.get("api_token"), creds.get("user_id")
+
+
+def _request_target(path, token=None):
+    """
+    Resolve (url, token) from path + optional token using call-time credentials.
+    """
+    if token is not None:
+        return path, token
+    base, token, _ = get_auth()
+    if path.startswith(("http://", "https://")):
+        return path, token
+    return f"{base}{path}", token
+
+
 def is_authenticated():
     """
     Check if the user is authenticated.
     """
     # Check if user is logged in.
+    cbrain_url, api_token, user_id = get_auth()
     if not api_token or not cbrain_url or not user_id:
         print("Not logged in. Use 'cbrain login' to login first.")
         return False
@@ -196,6 +212,7 @@ def handle_connection_error(error):
                 "Check your connection or set CBRAIN_TIMEOUT env var."
             )
         elif "Connection refused" in str(error):
+            cbrain_url, _, _ = get_auth()
             print(f"Error: Cannot connect to CBRAIN server at {cbrain_url}")
             print("Please check if the CBRAIN server is running and accessible.")
         else:
@@ -274,10 +291,11 @@ def version_info(args):
     return 0
 
 
-def api_get(url, token, params=None):
+def api_get(path, token=None, params=None):
     """
     Execute an authenticated GET request and return parsed JSON.
     """
+    url, token = _request_target(path, token)
     if params:
         url = f"{url}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, headers=auth_headers(token), method="GET")
@@ -296,10 +314,12 @@ def api_post_form(url, form_data, headers=None):
         return json.loads(r.read().decode())
 
 
-def api_send(url, token, method="POST", payload=None):
+def api_send(path, token=None, method="POST", payload=None):
     """
-    Execute an authenticated POST/PUT/DELETE request and return (data, status).
+    Authenticated POST/PUT/DELETE. ``path`` is root-relative or absolute URL.
+    When ``token`` is omitted, credentials load at call time via ``get_auth()``.
     """
+    url, token = _request_target(path, token)
     headers = auth_headers(token)
     body = None
     if payload is not None:
@@ -309,6 +329,19 @@ def api_send(url, token, method="POST", payload=None):
     with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as r:
         raw = r.read().decode()
         return (json.loads(raw) if raw.strip() else {}), r.status
+
+
+def api_post_multipart(path, body, content_type, token=None):
+    """
+    Authenticated multipart/form-data POST. Returns (parsed JSON, status).
+    """
+    url, token = _request_target(path, token)
+    headers = auth_headers(token)
+    headers["Content-Type"] = content_type
+    headers["Content-Length"] = str(len(body))
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT) as r:
+        return json.loads(r.read().decode()), r.status
 
 
 def output_json(args, data):
