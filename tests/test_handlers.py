@@ -153,9 +153,7 @@ def test_list_handler_validation_error_returns_1(monkeypatch):
     assert handle_errors(handle_task_list)(make_args()) == 1
 
 
-def test_user_details_sends_current_token_in_header(
-    monkeypatch, capture_urlopen, creds_file
-):
+def test_user_details_sends_current_token_in_header(monkeypatch, capture_urlopen, creds_file):
     """auth_headers(api_token) uses call-time credentials, not import-time globals."""
     from tests.conftest import write_auth_credentials
 

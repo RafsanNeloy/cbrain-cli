@@ -53,9 +53,7 @@ def test_list_files_passes_filter_params(monkeypatch):
         return cm
 
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
-    list_files(
-        _args(group_id=5, dp_id=9, user_id=None, parent_id=None, file_type="TextFile")
-    )
+    list_files(_args(group_id=5, dp_id=9, user_id=None, parent_id=None, file_type="TextFile"))
     assert "group_id=5" in captured["url"]
     assert "data_provider_id=9" in captured["url"]
     assert "type=TextFile" in captured["url"]
