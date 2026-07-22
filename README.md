@@ -68,7 +68,7 @@ When prompted for "Enter CBRAIN server URL prefix", enter:
 ## API Reference
 
 This CLI interfaces with the CBRAIN REST API. For complete API documentation and specifications, refer to:
-- [CBRAIN API Documentation (Swagger)](https://app.swaggerhub.com/apis/prioux/CBRAIN/7.0.0)
+- [CBRAIN API Documentation (Swagger)](https://portal.cbrain.mcgill.ca/swagger)
 
 ## CLI Usage
 
@@ -144,6 +144,80 @@ cbrain [options] <MODEL> <ACTION> [id_or_args]
 This is part of [**a GSoC (Google Summer of Code) 2025** project](https://summerofcode.withgoogle.com/programs/2025/projects/1An4Dp8N) sponsored by [INCF](https://www.incf.org/).
 
 The lead developer is [axif0](https://github.com/axif0), mentored by the developers of the CBRAIN project.
+
+Development continues as part of [**a GSoC (Google Summer of Code) 2026** project](https://summerofcode.withgoogle.com/programs/2026/projects/iJ7MpwX1), with [Rafsan Neloy](https://github.com/RafsanNeloy) contributing under the mentorship of the CBRAIN project developers.
+
+### Developer Setup
+
+Install the CLI in editable mode with the development tools:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -e ".[dev]"
+```
+
+This project is a pure Python CLI. There is no separate compile or build step for normal development; installing in editable mode is enough to run the local `cbrain` command.
+
+The `dev` extra installs the local review tools used by this repository:
+
+- `ruff` for linting and formatting;
+- `pytest` for focused unit tests;
+- `pre-commit` for local hook checks.
+
+### Linting And Formatting
+
+Ruff is used for linting and formatting:
+
+```bash
+ruff check .
+ruff format .
+```
+
+To check formatting without changing files:
+
+```bash
+ruff format --check .
+```
+
+### Pre-Commit Hooks
+
+The repository includes a `.pre-commit-config.yaml`. Install the hooks with:
+
+```bash
+pre-commit install
+```
+
+The hooks currently:
+
+- trim trailing whitespace;
+- ensure files end with a newline;
+- check YAML syntax;
+- check Markdown links;
+- run `ruff --fix`;
+- run `ruff format`.
+
+The generated capture fixture `capture_tests/expected_captures.txt` is excluded from whitespace hooks and from Ruff (via `pyproject.toml`) because exact captured output is intentional there.
+
+To run the hooks manually:
+
+```bash
+pre-commit run --all-files
+```
+
+### Tests
+
+The existing test suite is based on capture tests in `capture_tests/`. These are shell-based CLI output regression tests: they run commands from `capture_tests/cbrain_cli_commands` and compare the captured terminal output against `capture_tests/expected_captures.txt`.
+
+Capture tests require a local CBRAIN test server on `localhost:3000` with the expected test database seed. The GitHub Actions workflow sets this up by checking out the CBRAIN server repository at https://github.com/aces/cbrain.
+
+Focused unit tests should use `pytest` and should not require a live CBRAIN server:
+
+```bash
+pytest
+```
+
+When command output intentionally changes, update `capture_tests/expected_captures.txt`. When behavior changes without intended output changes, prefer adding focused unit tests where possible.
 
 ### Continuous Integration
 

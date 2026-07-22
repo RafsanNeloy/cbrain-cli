@@ -71,8 +71,13 @@ cbrain --json  project show 10
 cbrain --jsonl project show 10
 
 cbrain         project switch 10
+cbrain         project unswitch
+
 cbrain --json  project switch 10
+cbrain --json  project unswitch
+
 cbrain --jsonl project switch 10
+cbrain --jsonl project unswitch
 
 cbrain         project switch all  # 'all' not yet implemented as of Aug 2025
 cbrain --json  project switch all
@@ -91,7 +96,7 @@ cbrain --jsonl tag show 21
 cbrain         tag show   99
 cbrain         tag update 99 --name Renamed --user-id 2 --group-id 3
 cbrain         tag show   99
-cbrain         tag delete 99
+cbrain         tag delete 99 --yes
 
 cbrain         tag create --name NewTag1 --user-id 2 --group-id 3
 cbrain --json  tag create --name NewTag2 --user-id 2 --group-id 3
@@ -160,11 +165,10 @@ cbrain         file show 2
 cbrain --json  file show 2
 cbrain --jsonl file show 2
 
-cbrain         file delete 5
+cbrain         file delete 5 --yes
 
 cbrain         file move --file-id 2 --dp-id 15
 #cbrain --json  file move --file-id 2 --dp-id 15
 
 # Logging out
 cbrain         logout
-

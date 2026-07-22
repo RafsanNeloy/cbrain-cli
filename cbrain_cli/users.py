@@ -9,22 +9,31 @@ from cbrain_cli.cli_utils import (
     json_printer,
     user_id,
 )
-from cbrain_cli.config import CREDENTIALS_FILE, auth_headers
-
-headers = auth_headers(api_token)
+from cbrain_cli.config import DEFAULT_TIMEOUT, auth_headers
 
 
 def user_details(user_id):
     """
-    Get user name from user ID.
+    Fetch user details from the CBRAIN API.
+
+    Parameters
+    ----------
+    user_id : int
+        CBRAIN user ID.
+
+    Returns
+    -------
+    dict or None
+        User data dictionary, or None if the request fails.
     """
-    # Get user details.
     user_endpoint = f"{cbrain_url}/users/{user_id}"
 
-    user_request = urllib.request.Request(user_endpoint, headers=headers, method="GET")
+    user_request = urllib.request.Request(
+        user_endpoint, headers=auth_headers(api_token), method="GET"
+    )
 
     try:
-        with urllib.request.urlopen(user_request) as response:
+        with urllib.request.urlopen(user_request, timeout=DEFAULT_TIMEOUT) as response:
             user_data = json.loads(response.read().decode("utf-8"))
             return user_data
 
@@ -39,11 +48,17 @@ def user_details(user_id):
 # MARK: Whoami
 def whoami_user(args):
     """
-    Display current user information by getting user details from server.
+    Display current user information by fetching details from the server.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command-line arguments (json, version flags).
+
     Returns
     -------
-    None
-        Prints current user information.
+    int or None
+        Exit code on credential or API failure; otherwise None after printing.
     """
     version = getattr(args, "version", False)
 
@@ -64,37 +79,24 @@ def whoami_user(args):
     # Handle JSON output first
     if getattr(args, "json", False):
         output = {
-            "login": user_data["login"],
-            "full_name": user_data["full_name"],
+            "login": user_data.get("login", ""),
+            "full_name": user_data.get("full_name", ""),
             "server": cbrain_url,
         }
         json_printer(output)
         return 0
 
     if version:
-        # Show masked token.
-        masked_token = (
-            api_token[:2] + "*" * (len(api_token) - 4) + api_token[-2:]
-            if len(api_token) > 4
-            else "****"
-        )
-
-        print(f"DEBUG: Found credentials {CREDENTIALS_FILE}")
-        print(f"DEBUG: User in credentials: {user_data['login']} on server {cbrain_url}")
-        print(f"DEBUG: Token found: {masked_token}")
-        print("DEBUG: Verifying token...")
-        print("DEBUG: GET /session")
-
         # Verify token by making a session request.
         session_endpoint = f"{cbrain_url}/session"
 
-        session_request = urllib.request.Request(session_endpoint, headers=headers, method="GET")
+        session_request = urllib.request.Request(
+            session_endpoint, headers=auth_headers(api_token), method="GET"
+        )
 
         try:
-            with urllib.request.urlopen(session_request) as response:
+            with urllib.request.urlopen(session_request, timeout=DEFAULT_TIMEOUT) as response:
                 session_data = json.loads(response.read().decode("utf-8"))
-
-                print(f"DEBUG: Got JSON reply {json.dumps(session_data)}")
 
                 # Verify local credentials match server response.
                 remote_user_id = session_data.get("user_id")
@@ -106,13 +108,6 @@ def whoami_user(args):
                 if remote_token != api_token:
                     print("WARNING: Token mismatch - tokens don't match")
 
-                print(f"DEBUG: GET /users/{remote_user_id}")
-                remote_user_data = user_details(remote_user_id)
-                if remote_user_data is not None:
-                    print(f"DEBUG: Got JSON reply {json.dumps(remote_user_data)}")
-                else:
-                    print("DEBUG: Failed to get user details")
-
         except (urllib.error.URLError, urllib.error.HTTPError) as e:
             handle_connection_error(e)
             return 1
@@ -120,4 +115,6 @@ def whoami_user(args):
             print(f"Error verifying session: {e}")
             return 1
 
-    print(f"Current user: {user_data['login']} ({user_data['full_name']}) on server {cbrain_url}")
+    login = user_data.get("login", "")
+    full_name = user_data.get("full_name", "")
+    print(f"Current user: {login} ({full_name}) on server {cbrain_url}")

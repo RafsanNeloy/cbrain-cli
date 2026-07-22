@@ -5,7 +5,14 @@ Setup and commands for the CBRAIN CLI command line interface.
 import argparse
 import sys
 
-from cbrain_cli.cli_utils import handle_errors, is_authenticated, version_info
+from cbrain_cli.cli_utils import (
+    PAGINATABLE_ACTIONS,
+    CliValidationError,
+    handle_errors,
+    is_authenticated,
+    pagination,
+    version_info,
+)
 from cbrain_cli.data.tasks import operation_task
 from cbrain_cli.handlers import (
     handle_background_list,
@@ -43,14 +50,15 @@ from cbrain_cli.sessions import create_session, logout_session
 from cbrain_cli.users import whoami_user
 
 
-def main():
+def build_parser():
     """
-    The function that controls the CBRAIN CLI.
+    Build and return the CBRAIN CLI argument parser and command subparsers.
 
     Returns
     -------
-    None
-        A command is run via inputs from the user.
+    tuple
+        (parser, command_parsers) where command_parsers maps command names
+        to their top-level subparsers for help display.
     """
     parser = argparse.ArgumentParser(description="CBRAIN CLI")
     parser.add_argument("-j", "--json", action="store_true", help="Output in JSON format")
@@ -149,6 +157,9 @@ def main():
     # file delete
     file_delete_parser = file_subparsers.add_parser("delete", help="Delete a file")
     file_delete_parser.add_argument("file_id", type=int, help="ID of the file to delete")
+    file_delete_parser.add_argument(
+        "-y", "--yes", action="store_true", help="Skip confirmation prompt"
+    )
     file_delete_parser.set_defaults(func=handle_errors(handle_file_delete))
 
     # Data provider commands
@@ -194,6 +205,9 @@ def main():
     dataprovider_delete_unregistered_files_parser.add_argument(
         "id", type=int, help="Data provider ID"
     )
+    dataprovider_delete_unregistered_files_parser.add_argument(
+        "-y", "--yes", action="store_true", help="Skip confirmation prompt"
+    )
     dataprovider_delete_unregistered_files_parser.set_defaults(
         func=handle_errors(handle_dataprovider_delete_unregistered)
     )
@@ -235,7 +249,7 @@ def main():
     tool_show_parser.add_argument("id", type=int, help="Tool ID")
     tool_show_parser.set_defaults(func=handle_errors(handle_tool_show))
 
-    # tool list (reusing show_tool without id)
+    # tool list
     tool_list_parser = tool_subparsers.add_parser("list", help="List all tools")
     tool_list_parser.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
     tool_list_parser.add_argument(
@@ -325,6 +339,9 @@ def main():
         type=int,
         help="Tag ID to delete",
     )
+    tag_delete_parser.add_argument(
+        "-y", "--yes", action="store_true", help="Skip confirmation prompt"
+    )
     tag_delete_parser.set_defaults(func=handle_errors(handle_tag_delete))
 
     # Background activity commands
@@ -353,17 +370,17 @@ def main():
     # task list
     task_list_parser = task_subparsers.add_parser("list", help="List tasks")
     task_list_parser.add_argument(
-        "filter_type", nargs="?", choices=["bourreau-id"], help="Filter type (optional)"
+        "filter_name", nargs="?", choices=["bourreau-id"], help="Filter type (optional)"
     )
     task_list_parser.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
     task_list_parser.add_argument(
         "--per-page", type=int, default=25, help="Number of tasks per page (5-1000, default: 25)"
     )
     task_list_parser.add_argument(
-        "filter_value",
+        "bourreau_id",
         type=int,
         nargs="?",
-        help="Filter value (required if filter_type is specified)",
+        help="Bourreau ID (required when filter is bourreau-id)",
     )
     task_list_parser.set_defaults(func=handle_errors(handle_task_list))
 
@@ -397,16 +414,53 @@ def main():
     remote_resource_show_parser.add_argument("remote_resource", type=int, help="Remote resource ID")
     remote_resource_show_parser.set_defaults(func=handle_errors(handle_remote_resource_show))
 
-    # MARK: Setup CLI
-    args = parser.parse_args()
+    command_parsers = {
+        "file": file_parser,
+        "dataprovider": dataprovider_parser,
+        "project": project_parser,
+        "tool": tool_parser,
+        "tool-config": tool_configs_parser,
+        "tag": tag_parser,
+        "background": background_parser,
+        "task": task_parser,
+        "remote-resource": remote_resource_parser,
+    }
+    return parser, command_parsers
+
+
+def main(argv=None):
+    """
+    The function that controls the CBRAIN CLI.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command-line arguments excluding the program name.
+
+    Returns
+    -------
+    int or None
+        Exit code when applicable.
+    """
+    parser, command_parsers = build_parser()
+    args = parser.parse_args(argv)
 
     if not args.command:
         parser.print_help()
         return
 
-    # Handle session commands (no authentication needed for login, version, and whoami).
+    if (args.command, getattr(args, "action", None)) in PAGINATABLE_ACTIONS:
+        try:
+            pagination(args, {})
+        except CliValidationError as e:
+            print(f"Error: {e}")
+            return 1
+
+    # Handle session commands (no authentication needed for login, logout, version, and whoami).
     if args.command == "login":
         return handle_errors(create_session)(args)
+    elif args.command == "logout":
+        return handle_errors(logout_session)(args)
     elif args.command == "version":
         return handle_errors(version_info)(args)
     elif args.command == "whoami":
@@ -417,9 +471,7 @@ def main():
         return 1
 
     # Handle authenticated commands.
-    if args.command == "logout":
-        return handle_errors(logout_session)(args)
-    elif args.command in [
+    if args.command in [
         "file",
         "dataprovider",
         "project",
@@ -432,24 +484,7 @@ def main():
     ]:
         if not hasattr(args, "action") or not args.action:
             # Show help for the specific model command.
-            if args.command == "file":
-                file_parser.print_help()
-            elif args.command == "dataprovider":
-                dataprovider_parser.print_help()
-            elif args.command == "project":
-                project_parser.print_help()
-            elif args.command == "tool":
-                tool_parser.print_help()
-            elif args.command == "tool-config":
-                tool_configs_parser.print_help()
-            elif args.command == "tag":
-                tag_parser.print_help()
-            elif args.command == "background":
-                background_parser.print_help()
-            elif args.command == "task":
-                task_parser.print_help()
-            elif args.command == "remote-resource":
-                remote_resource_parser.print_help()
+            command_parsers[args.command].print_help()
             return 1
         else:
             # Execute the function associated with the command.
