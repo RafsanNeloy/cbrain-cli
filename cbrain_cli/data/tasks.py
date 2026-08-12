@@ -1,3 +1,5 @@
+import json
+
 from cbrain_cli.cli_utils import (
     CbrainClient,
     CliValidationError,
@@ -119,3 +121,50 @@ def operation_task(args):
 
     data, _ = CbrainClient.from_credentials().send("POST", "/tasks/operation", payload=payload)
     return data
+
+
+def create_task(args):
+    """
+    Create a new task in CBRAIN.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command line arguments including tool_config_id, results_dp_id, file_ids, invoke
+
+    Returns
+    -------
+    tuple
+        (response_data, response_status)
+    """
+    tool_config_id = getattr(args, "tool_config_id", None)
+    results_dp_id = getattr(args, "results_dp_id", None)
+    file_ids = getattr(args, "file_ids", None)
+
+    for val, label, field in [
+        (tool_config_id, "Tool config ID is required", "tool_config_id"),
+        (results_dp_id, "Results data provider ID is required", "results_dp_id"),
+        (file_ids, "At least one file ID is required", "file_ids"),
+    ]:
+        if not val:
+            raise CliValidationError(label, field=field)
+
+    invoke = {}
+    invoke_json = getattr(args, "invoke", None)
+    if invoke_json:
+        try:
+            invoke = json.loads(invoke_json)
+        except json.JSONDecodeError as e:
+            raise CliValidationError(f"Invalid JSON for --invoke: {e}", field="invoke") from e
+
+    payload = {
+        "cbrain_task": {
+            "tool_config_id": tool_config_id,
+            "results_data_provider_id": results_dp_id,
+            "params": {
+                "interface_userfile_ids": file_ids,
+                "invoke": invoke,
+            },
+        }
+    }
+    return CbrainClient.from_credentials().send("POST", "/tasks", payload=payload)

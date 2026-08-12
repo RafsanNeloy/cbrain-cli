@@ -1063,6 +1063,64 @@ Stderr:
 (No output)
 
 ############################
+Command: cbrain         task create --tool-config-id 20 --results-dp-id 15 --file-ids 2
+Status: 0
+Stdout: 30 bytes
+Stderr: 0 bytes
+
+Stdout:
+Task(s) created: 7 [HTTP 200]
+Stderr:
+(No output)
+
+############################
+Command: cbrain --json  task create --tool-config-id 20 --results-dp-id 15 --file-ids 2
+Status: 0
+Stdout: 569 bytes
+Stderr: 0 bytes
+
+Stdout:
+[
+  {
+    "id": 8,
+    "type": "CbrainTask::SimpleMonitor",
+    "user_id": 2,
+    "group_id": 3,
+    "bourreau_id": 13,
+    "tool_config_id": 20,
+    "batch_id": 8,
+    "params": {
+      "interface_userfile_ids": [
+        2
+      ],
+      "invoke": {}
+    },
+    "status": "New",
+    "created_at": "2222-22-22T33:33Z",
+    "updated_at": "2222-22-22T33:33Z",
+    "run_number": null,
+    "results_data_provider_id": 15,
+    "cluster_workdir_size": null,
+    "workdir_archived": false,
+    "workdir_archive_userfile_id": null,
+    "description": null
+  }
+]
+Stderr:
+(No output)
+
+############################
+Command: cbrain --jsonl task create --tool-config-id 20 --results-dp-id 15 --file-ids 2
+Status: 0
+Stdout: 421 bytes
+Stderr: 0 bytes
+
+Stdout:
+{"id":9,"type":"CbrainTask::SimpleMonitor","user_id":2,"group_id":3,"bourreau_id":13,"tool_config_id":20,"batch_id":9,"params":{"interface_userfile_ids":[2],"invoke":{}},"status":"New","created_at":"2222-22-22T33:33Z","updated_at":"2222-22-22T33:33Z","run_number":null,"results_data_provider_id":15,"cluster_workdir_size":null,"workdir_archived":false,"workdir_archive_userfile_id":null,"description":null}
+Stderr:
+(No output)
+
+############################
 Command: ./switch_session admin
 Status: 0
 Stdout: 0 bytes

@@ -118,6 +118,11 @@ cbrain --json  task operation hold --task-id 2
 cbrain --jsonl task operation hold --task-id 2
 cbrain         task operation hold  # missing --task-id / --batch-id
 
+# Task create
+cbrain         task create --tool-config-id 20 --results-dp-id 15 --file-ids 2
+cbrain --json  task create --tool-config-id 20 --results-dp-id 15 --file-ids 2
+cbrain --jsonl task create --tool-config-id 20 --results-dp-id 15 --file-ids 2
+
 # ToolConfigs, as admin user
 ./switch_session admin
 cbrain         tool-config list

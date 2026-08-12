@@ -321,6 +321,12 @@ def handle_task_operation(args):
     tasks_fmt.print_task_operation_result(result, args)
 
 
+def handle_task_create(args):
+    """Create a new task in CBRAIN and display the result."""
+    data, status = tasks.create_task(args)
+    tasks_fmt.print_task_create_result(data, status, args)
+
+
 # Remote resource command handlers
 def handle_remote_resource_list(args):
     """Retrieve and display a list of remote computational resources available in CBRAIN."""

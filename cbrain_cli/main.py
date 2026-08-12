@@ -39,6 +39,7 @@ from cbrain_cli.handlers import (
     handle_tag_list,
     handle_tag_show,
     handle_tag_update,
+    handle_task_create,
     handle_task_list,
     handle_task_operation,
     handle_task_show,
@@ -499,6 +500,37 @@ def build_parser():
         help="Archive without compression (admin only)",
     )
     task_operation_parser.set_defaults(func=handle_errors(handle_task_operation))
+
+    # task create
+    task_create_parser = task_subparsers.add_parser("create", help="Create a new task")
+    task_create_parser.add_argument(
+        "--tool-config-id",
+        dest="tool_config_id",
+        type=int,
+        required=True,
+        help="Tool configuration ID",
+    )
+    task_create_parser.add_argument(
+        "--results-dp-id",
+        dest="results_dp_id",
+        type=int,
+        required=True,
+        help="Results data provider ID",
+    )
+    task_create_parser.add_argument(
+        "--file-ids",
+        dest="file_ids",
+        type=int,
+        nargs="+",
+        required=True,
+        help="Input file IDs",
+    )
+    task_create_parser.add_argument(
+        "--invoke",
+        type=str,
+        help='Invoke parameters as JSON string (e.g. \'{"my_input":"1"}\')',
+    )
+    task_create_parser.set_defaults(func=handle_errors(handle_task_create))
 
     # Remote resource commands (CBRAIN bourreaux / execution servers)
     remote_resource_parser = subparsers.add_parser(
