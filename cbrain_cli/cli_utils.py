@@ -86,18 +86,30 @@ class CbrainClient:
         raw, _ = self._request("GET", path, params=params)
         return json.loads(raw.decode())
 
+    def get_raw(self, path, params=None):
+        """
+        Authenticated GET; returns (raw_bytes, status).
+        """
+        return self._request("GET", path, params=params)
+
     def send(self, method, path, payload=None):
         """
         Authenticated POST/PUT/DELETE with optional JSON body; returns (parsed, status).
+        """
+        raw, status = self.send_raw(method, path, payload=payload)
+        decoded = raw.decode()
+        return (json.loads(decoded) if decoded.strip() else {}), status
+
+    def send_raw(self, method, path, payload=None):
+        """
+        Authenticated POST/PUT/DELETE; returns (raw_bytes, status).
         """
         hdrs = auth_headers(self.token)
         body = None
         if payload is not None:
             hdrs["Content-Type"] = "application/json"
             body = json.dumps(payload).encode()
-        raw, status = self._request(method, path, headers=hdrs, body=body)
-        decoded = raw.decode()
-        return (json.loads(decoded) if decoded.strip() else {}), status
+        return self._request(method, path, headers=hdrs, body=body)
 
     def post_form(self, path, form_data, headers=None):
         """

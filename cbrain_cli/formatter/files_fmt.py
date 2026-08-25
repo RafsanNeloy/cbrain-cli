@@ -1,4 +1,4 @@
-from cbrain_cli.cli_utils import dynamic_table_print, output_json
+from cbrain_cli.cli_utils import dynamic_table_print, json_printer, output_json
 
 
 def print_file_details(file_data, args):
@@ -147,3 +147,55 @@ def print_delete_result(response_data, args):
         print(f"Background activity ID: {background_activity_id}")
     else:
         print("File deletion initiated successfully")
+
+
+def print_bulk_file_result(response_data, status, operation, args):
+    """
+    Print result of a bulk file operation (sync, etc.).
+
+    Parameters
+    ----------
+    response_data : dict
+        Response data from the server
+    status : int
+        HTTP status code
+    operation : str
+        Operation name for display
+    args : argparse.Namespace
+        Command line arguments
+    """
+    if output_json(args, response_data):
+        return
+    if status in (200, 201):
+        bg_id = (
+            response_data.get("background_activity_id") if isinstance(response_data, dict) else None
+        )
+        message = response_data.get("message", "") if isinstance(response_data, dict) else ""
+        if message:
+            print(message.strip())
+        if bg_id:
+            print(f"Background activity ID: {bg_id}")
+        else:
+            print(f"File {operation} initiated [HTTP {status}]")
+    else:
+        print(f"File {operation} failed [HTTP {status}]")
+
+
+def print_batch_download_result(result, args):
+    """
+    Print result of a batch download.
+
+    Parameters
+    ----------
+    result : tuple
+        (bytes_written, output_path) or (parsed_json, None)
+    args : argparse.Namespace
+        Command line arguments
+    """
+    data_or_bytes, output_path = result
+    if output_path is None:
+        if output_json(args, data_or_bytes):
+            return
+        json_printer(data_or_bytes)
+        return
+    print(f"Downloaded {data_or_bytes} bytes → {output_path}")

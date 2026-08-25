@@ -118,6 +118,17 @@ cbrain --json  task operation hold --task-id 2
 cbrain --jsonl task operation hold --task-id 2
 cbrain         task operation hold  # missing --task-id / --batch-id
 
+# Task create (client validation; deterministic, no server mutation)
+cbrain         task create --tool-config-id 20 --results-dp-id 15 --file-ids 2 --invoke '{bad'  # bad --invoke JSON
+
+# File sync / content / batch-download validation (no mutation)
+cbrain         file sync  # missing --file-id
+cbrain         file batch-download  # missing --file-id
+
+# Data provider browse/register validation
+cbrain         dataprovider register 15  # missing --basenames
+cbrain         dataprovider unregister 15  # missing --basenames
+
 # ToolConfigs, as admin user
 ./switch_session admin
 cbrain         tool-config list

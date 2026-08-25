@@ -18,15 +18,21 @@ from cbrain_cli.data.tasks import TASK_OPERATIONS
 from cbrain_cli.handlers import (
     handle_background_list,
     handle_background_show,
+    handle_dataprovider_browse,
     handle_dataprovider_delete_unregistered,
     handle_dataprovider_is_alive,
     handle_dataprovider_list,
+    handle_dataprovider_register,
     handle_dataprovider_show,
+    handle_dataprovider_unregister,
+    handle_file_batch_download,
+    handle_file_content,
     handle_file_copy,
     handle_file_delete,
     handle_file_list,
     handle_file_move,
     handle_file_show,
+    handle_file_sync,
     handle_file_upload,
     handle_project_list,
     handle_project_show,
@@ -39,6 +45,7 @@ from cbrain_cli.handlers import (
     handle_tag_list,
     handle_tag_show,
     handle_tag_update,
+    handle_task_create,
     handle_task_list,
     handle_task_operation,
     handle_task_show,
@@ -210,6 +217,41 @@ def build_parser():
     )
     file_delete_parser.set_defaults(func=handle_errors(handle_file_delete))
 
+    # file content
+    file_content_parser = file_subparsers.add_parser("content", help="Get content of a synced file")
+    file_content_parser.add_argument("file", type=int, help="File ID")
+    file_content_parser.set_defaults(func=handle_errors(handle_file_content))
+
+    # file sync
+    file_sync_parser = file_subparsers.add_parser("sync", help="Sync files to cache")
+    file_sync_parser.add_argument(
+        "--file-id",
+        dest="file_id",
+        type=int,
+        nargs="+",
+        help="One or more file IDs to sync",
+    )
+    file_sync_parser.set_defaults(func=handle_errors(handle_file_sync))
+
+    # file batch-download
+    file_batch_dl_parser = file_subparsers.add_parser(
+        "batch-download", help="Download multiple files as a single archive"
+    )
+    file_batch_dl_parser.add_argument(
+        "--file-id",
+        dest="file_id",
+        type=int,
+        nargs="+",
+        help="One or more file IDs to download",
+    )
+    file_batch_dl_parser.add_argument(
+        "--output",
+        type=str,
+        default="cbrain_download.tar.gz",
+        help="Output archive path (default: cbrain_download.tar.gz)",
+    )
+    file_batch_dl_parser.set_defaults(func=handle_errors(handle_file_batch_download))
+
     # Data provider commands (alias: dataprovider)
     data_provider_parser = subparsers.add_parser(
         "data-provider",
@@ -263,6 +305,46 @@ def build_parser():
     data_provider_delete_unregistered_files_parser.set_defaults(
         func=handle_errors(handle_dataprovider_delete_unregistered)
     )
+
+    # data-provider browse
+    data_provider_browse_parser = data_provider_subparsers.add_parser(
+        "browse", help="Browse files on a data provider"
+    )
+    data_provider_browse_parser.add_argument("id", type=int, help="Data provider ID")
+    data_provider_browse_parser.set_defaults(func=handle_errors(handle_dataprovider_browse))
+
+    # data-provider register
+    data_provider_register_parser = data_provider_subparsers.add_parser(
+        "register", help="Register files from a data provider into CBRAIN"
+    )
+    data_provider_register_parser.add_argument("id", type=int, help="Data provider ID")
+    data_provider_register_parser.add_argument(
+        "--basenames", type=str, nargs="+", help="File basenames to register"
+    )
+    data_provider_register_parser.add_argument(
+        "--file-type",
+        dest="file_type",
+        type=str,
+        default="SingleFile",
+        help="File type for all files (default: SingleFile)",
+    )
+    data_provider_register_parser.add_argument(
+        "--group-id", dest="group_id", type=int, default=1, help="Group ID (default: 1)"
+    )
+    data_provider_register_parser.set_defaults(func=handle_errors(handle_dataprovider_register))
+
+    # data-provider unregister
+    data_provider_unregister_parser = data_provider_subparsers.add_parser(
+        "unregister", help="Unregister files from a data provider"
+    )
+    data_provider_unregister_parser.add_argument("id", type=int, help="Data provider ID")
+    data_provider_unregister_parser.add_argument(
+        "--basenames",
+        type=str,
+        nargs="+",
+        help="File basenames to unregister",
+    )
+    data_provider_unregister_parser.set_defaults(func=handle_errors(handle_dataprovider_unregister))
 
     # Project commands
     project_parser = subparsers.add_parser("project", help="Project operations")
@@ -499,6 +581,37 @@ def build_parser():
         help="Archive without compression (admin only)",
     )
     task_operation_parser.set_defaults(func=handle_errors(handle_task_operation))
+
+    # task create
+    task_create_parser = task_subparsers.add_parser("create", help="Create a new task")
+    task_create_parser.add_argument(
+        "--tool-config-id",
+        dest="tool_config_id",
+        type=int,
+        required=True,
+        help="Tool configuration ID",
+    )
+    task_create_parser.add_argument(
+        "--results-dp-id",
+        dest="results_dp_id",
+        type=int,
+        required=True,
+        help="Results data provider ID",
+    )
+    task_create_parser.add_argument(
+        "--file-ids",
+        dest="file_ids",
+        type=int,
+        nargs="+",
+        required=True,
+        help="Input file IDs",
+    )
+    task_create_parser.add_argument(
+        "--invoke",
+        type=str,
+        help='Invoke parameters as JSON string (e.g. \'{"my_input":"1"}\')',
+    )
+    task_create_parser.set_defaults(func=handle_errors(handle_task_create))
 
     # Remote resource commands (CBRAIN bourreaux / execution servers)
     remote_resource_parser = subparsers.add_parser(

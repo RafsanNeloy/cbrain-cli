@@ -186,3 +186,31 @@ def print_task_operation_result(result, args):
         print("-" * 30)
         print(", ".join(str(bac_id) for bac_id in bac_ids))
         print("Track with: cbrain background show <id>")
+
+
+def print_task_create_result(data, status, args):
+    """
+    Print result of a task creation.
+
+    Parameters
+    ----------
+    data : dict or list
+        Response data from the server
+    status : int
+        HTTP status code
+    args : argparse.Namespace
+        Command line arguments
+    """
+    if output_json(args, data):
+        return
+    if status in (200, 201):
+        if isinstance(data, list) and data:
+            ids = [str(t.get("id", "?")) for t in data]
+            print(f"Task(s) created: {', '.join(ids)} [HTTP {status}]")
+        elif isinstance(data, dict):
+            tid = data.get("id", "?")
+            print(f"Task created: ID {tid} [HTTP {status}]")
+        else:
+            print(f"Task(s) created [HTTP {status}]")
+    else:
+        print(f"Task creation failed [HTTP {status}]")

@@ -1063,6 +1063,61 @@ Stderr:
 (No output)
 
 ############################
+Command: cbrain         task create --tool-config-id 20 --results-dp-id 15 --file-ids 2 --invoke '{bad'  # bad --invoke JSON
+Status: 1
+Stdout: 119 bytes
+Stderr: 0 bytes
+
+Stdout:
+Error: Invalid JSON for --invoke: Expecting property name enclosed in double quotes: line 1 column 2 (char 1) (invoke)
+Stderr:
+(No output)
+
+############################
+Command: cbrain         file sync  # missing --file-id
+Status: 1
+Stdout: 52 bytes
+Stderr: 0 bytes
+
+Stdout:
+Error: At least one file ID is required (--file-id)
+Stderr:
+(No output)
+
+############################
+Command: cbrain         file batch-download  # missing --file-id
+Status: 1
+Stdout: 52 bytes
+Stderr: 0 bytes
+
+Stdout:
+Error: At least one file ID is required (--file-id)
+Stderr:
+(No output)
+
+############################
+Command: cbrain         dataprovider register 15  # missing --basenames
+Status: 1
+Stdout: 55 bytes
+Stderr: 0 bytes
+
+Stdout:
+Error: At least one basename is required (--basenames)
+Stderr:
+(No output)
+
+############################
+Command: cbrain         dataprovider unregister 15  # missing --basenames
+Status: 1
+Stdout: 55 bytes
+Stderr: 0 bytes
+
+Stdout:
+Error: At least one basename is required (--basenames)
+Stderr:
+(No output)
+
+############################
 Command: ./switch_session admin
 Status: 0
 Stdout: 0 bytes

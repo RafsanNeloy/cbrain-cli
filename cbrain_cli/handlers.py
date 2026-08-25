@@ -91,6 +91,31 @@ def handle_file_delete(args):
     files_fmt.print_delete_result(result, args)
 
 
+def handle_file_content(args):
+    """Retrieve and display content of a synced file."""
+    result = files.file_content(args)
+    if output_json(args, result):
+        return
+    if isinstance(result, str):
+        print(result)
+    else:
+        json_printer(result)
+
+
+def handle_file_sync(args):
+    """Sync one or more files to cache and display the result."""
+    data, status = files.sync_files(args)
+    files_fmt.print_bulk_file_result(data, status, "sync", args)
+    if status not in (200, 201):
+        return 1
+
+
+def handle_file_batch_download(args):
+    """Download multiple files as a single archive."""
+    result = files.batch_download_files(args)
+    files_fmt.print_batch_download_result(result, args)
+
+
 # Data provider command handlers
 def handle_dataprovider_list(args):
     """Retrieve and display a paginated list of available data providers in CBRAIN."""
@@ -128,6 +153,34 @@ def handle_dataprovider_delete_unregistered(args):
     if output_json(args, result):
         return
     json_printer(result)
+
+
+def handle_dataprovider_browse(args):
+    """Browse files on a data provider."""
+    result = data_providers.browse_data_provider(args)
+    if output_json(args, result):
+        return
+    json_printer(result)
+
+
+def handle_dataprovider_register(args):
+    """Register files from a data provider into CBRAIN."""
+    data, status = data_providers.register_files(args)
+    if output_json(args, data):
+        return
+    print(f"Files registered [HTTP {status}]")
+    if status not in (200, 201):
+        return 1
+
+
+def handle_dataprovider_unregister(args):
+    """Unregister files from a data provider."""
+    data, status = data_providers.unregister_files(args)
+    if output_json(args, data):
+        return
+    print(f"Files unregistered [HTTP {status}]")
+    if status not in (200, 201):
+        return 1
 
 
 # Project command handlers
@@ -319,6 +372,14 @@ def handle_task_operation(args):
     """Run a task operation and display the result."""
     result = tasks.operation_task(args)
     tasks_fmt.print_task_operation_result(result, args)
+
+
+def handle_task_create(args):
+    """Create a new task in CBRAIN and display the result."""
+    data, status = tasks.create_task(args)
+    tasks_fmt.print_task_create_result(data, status, args)
+    if status not in (200, 201):
+        return 1
 
 
 # Remote resource command handlers

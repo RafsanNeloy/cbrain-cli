@@ -1,3 +1,4 @@
+import json
 import mimetypes
 import os
 
@@ -192,3 +193,80 @@ def delete_file(args):
         payload={"file_ids": [str(file_id)]},
     )
     return data
+
+
+def file_content(args):
+    """
+    Get the content of a synced file.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command line arguments including file
+
+    Returns
+    -------
+    str or dict
+        Raw file content string or parsed JSON
+    """
+    file_id = getattr(args, "file", None)
+    if not file_id:
+        raise CliValidationError("File ID is required", field="file")
+    raw, _ = CbrainClient.from_credentials().get_raw(f"/userfiles/{file_id}/content")
+    text = raw.decode(errors="replace")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
+
+
+def sync_files(args):
+    """
+    Sync one or more files to cache.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command line arguments including file_id
+
+    Returns
+    -------
+    tuple
+        (response_data, response_status)
+    """
+    file_ids = getattr(args, "file_id", None)
+    if not file_ids:
+        raise CliValidationError("At least one file ID is required", field="--file-id")
+    return CbrainClient.from_credentials().send(
+        "POST", "/userfiles/sync_multiple", payload={"file_ids": file_ids}
+    )
+
+
+def batch_download_files(args):
+    """
+    Download multiple files as a single archive (POST /userfiles/download).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command line arguments including file_id and optional output path
+
+    Returns
+    -------
+    tuple
+        (bytes_written, output_path) if binary archive, else (parsed_json, None)
+    """
+    file_ids = getattr(args, "file_id", None)
+    if not file_ids:
+        raise CliValidationError("At least one file ID is required", field="--file-id")
+
+    output_path = getattr(args, "output", None) or "cbrain_download.tar.gz"
+    raw, _ = CbrainClient.from_credentials().send_raw(
+        "POST", "/userfiles/download", payload={"file_ids": file_ids}
+    )
+    try:
+        return json.loads(raw.decode()), None
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        with open(output_path, "wb") as f:
+            f.write(raw)
+        return len(raw), output_path
